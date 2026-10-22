@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Happy Birthday Baby ♥️</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --rose-glow: rgba(244, 63, 94, 0.45);
+      --gold-glow: rgba(251, 191, 36, 0.4);
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      background: #0f0514;
+      color: #fff5f7;
+    }
+    .font-serif-display {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+    }
+    .font-handwriting {
+      font-family: 'Dancing Script', cursive;
+    }
+    #webgl-container {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: auto;
+    }
+    #fx-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 15;
+      pointer-events: none;
+    }
+    .ui-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .interactive {
+      pointer-events: auto;
+    }
+    /* Horizontal Swipe Track */
+    .pages-viewport {
+      position: relative;
+      width: 100%;
+      flex: 1;
+      overflow: hidden;
+      pointer-events: auto;
+      touch-action: pan-y;
+    }
+    .pages-track {
+      display: flex;
+      width: 500%;
+      height: 100%;
+      transition: transform 0.75s cubic-bezier(0.22, 1, 0.36, 1);
+      will-change: transform;
+    }
+    .page-slide {
+      width: 20%;
+      height: 100%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem 1rem;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    /* Glassmorphism Cards */
+    .glass-card {
+      background: linear-gradient(135deg, rgba(35, 12, 42, 0.68) 0%, rgba(20, 7, 28, 0.82) 100%);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 192, 213, 0.22);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), 0 0 35px rgba(244, 63, 94, 0.16);
+    }
+    .note-paper {
+      background: linear-gradient(145deg, rgba(44, 14, 48, 0.84) 0%, rgba(25, 8, 30, 0.92) 100%);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(251, 191, 36, 0.32);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), inset 0 0 30px rgba(244, 63, 94, 0.12);
+      user-select: text;
+    }
+    /* 3D Tilt Photo Card */
+    .photo-card-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+    }
+    .photo-card-3d:hover {
+      box-shadow: 0 20px 40px rgba(244, 63, 94, 0.35), 0 0 25px rgba(251, 191, 36, 0.25);
+    }
+    /* Vinyl Spin */
+    @keyframes spinSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .vinyl-spinning {
+      animation: spinSlow 6s linear infinite;
+    }
+    /* Equalizer Bars */
+    @keyframes eqBounce {
+      0%, 100% { height: 22%; }
+      50% { height: 95%; }
+    }
+    .eq-bar {
+      width: 3px;
+      background: linear-gradient(to top, #f43f5e, #fbbf24);
+      border-radius: 999px;
+      height: 25%;
+    }
+    .playing .eq-bar:nth-child(1) { animation: eqBounce 0.6s ease-in-out infinite; }
+    .playing .eq-bar:nth-child(2) { animation: eqBounce 0.45s ease-in-out 0.15s infinite; }
+    .playing .eq-bar:nth-child(3) { animation: eqBounce 0.7s ease-in-out 0.3s infinite; }
+    .playing .eq-bar:nth-child(4) { animation: eqBounce 0.52s ease-in-out 0.08s infinite; }
+
+    /* Pulse Swipe Hint */
+    @keyframes swipePulse {
+      0%, 100% { transform: translateX(0); opacity: 0.85; }
+      50% { transform: translateX(8px); opacity: 1; }
+    }
+    .swipe-hint-anim {
+      animation: swipePulse 1.8s ease-in-out infinite;
+    }
+
+    /* Knife slice guide animation */
+    @keyframes sliceGuide {
+      0% { transform: translateX(-70px) translateY(-10px) rotate(-15deg); opacity: 0.3; }
+      50% { transform: translateX(70px) translateY(15px) rotate(10deg); opacity: 1; }
+      100% { transform: translateX(-70px) translateY(-10px) rotate(-15deg); opacity: 0.3; }
+    }
+    .knife-guide {
+      animation: sliceGuide 2.4s ease-in-out infinite;
+    }
+
+    /* Custom Scrollbar for inner cards */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.04);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(244, 63, 94, 0.45);
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 3D WebGL Living World Canvas -->
+  <div id="webgl-container"></div>
+
+  <!-- 2D Overlay FX Canvas (Cake Cut Slice Trail & Confetti Sparkles) -->
+  <canvas id="fx-canvas"></canvas>
+
+  <!-- Main UI Layer -->
+  <div class="ui-layer">
+
+    <!-- Top Navigation Bar -->
+    <header class="interactive w-full px-3 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-2 z-30">
+      <div class="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-pink-500/25 rounded-full px-3.5 py-1.5">
+        <span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+        <span class="text-xs sm:text-sm font-medium tracking-wide text-pink-100">
+          Happy Birthday <span class="text-amber-300 font-semibold">Baby</span> ♥️
+        </span>
+      </div>
+
+
+    </header>
+
+    <!-- Swipeable 5-Page Viewport -->
+    <main id="pages-viewport" class="pages-viewport">
+      <div id="pages-track" class="pages-track">
+
+        <!-- ================= PAGE 1: CELEBRATION (3D Balloons, Cake & Flower Rain) ================= -->
+        <section class="page-slide relative" data-page="0">
+          <div class="max-w-xl w-full flex flex-col items-center text-center mt-auto mb-2 sm:my-auto z-10 pointer-events-none">
+            <!-- Top Badge -->
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/20 border border-rose-400/35 backdrop-blur-md text-rose-200 text-xs sm:text-sm font-medium mb-3 shadow-lg">
+              <span>Living in This Moment With You</span>
+            </div>
+
+            <h1 class="font-serif-display text-4xl sm:text-6xl font-bold tracking-tight text-white drop-shadow-[0_4px_24px_rgba(244,63,94,0.65)] leading-tight">
+              Happy Birthday,<br />
+              <span class="bg-gradient-to-r from-rose-300 via-amber-200 to-pink-300 bg-clip-text text-transparent font-handwriting text-5xl sm:text-7xl">
+                My Beautiful Baby
+              </span>
+            </h1>
+
+            <p class="mt-2 sm:mt-3 text-xs sm:text-base text-pink-100/90 max-w-xl drop-shadow bg-black/25 backdrop-blur-sm px-4 py-2 rounded-2xl border border-white/10">
+              Aaja timro birthday ho, tara honestly ma nai lucky feel garchu because the universe gave me you. I hope this year brings you everything your beautiful heart deserves and I hope I get to be there, holding your hand through it all.
+            </p>
+
+            <!-- Spacer so 3D Cake & Balloons in center remain clearly visible -->
+            <div class="h-44 sm:h-56 w-full"></div>
+
+            <!-- Interactive Celebration Controls -->
+            <div class="interactive glass-card rounded-3xl p-4 sm:p-5 w-full max-w-md flex flex-col items-center gap-3">
+              <div class="flex flex-wrap items-center justify-center gap-2 w-full">
+                <button id="btn-burst-balloons" type="button" class="flex-1 min-w-[130px] py-2.5 px-3 rounded-2xl bg-gradient-to-r from-rose-500/80 to-pink-600/80 hover:from-rose-500 hover:to-pink-600 text-white font-medium text-xs sm:text-sm shadow-lg transition flex items-center justify-center gap-1.5">
+                  <span></span>I Love You Baby ♥️
+                </button>
+                <button id="btn-petal-blizzard" type="button" class="flex-1 min-w-[130px] py-2.5 px-3 rounded-2xl bg-gradient-to-r from-amber-500/80 to-rose-500/80 hover:from-amber-500 hover:to-rose-500 text-white font-medium text-xs sm:text-sm shadow-lg transition flex items-center justify-center gap-1.5">
+                  <span>🌺</span>Shower Flowers
+                </button>
+              </div>
+
+              <button type="button" data-goto="1" class="w-full py-3 px-5 rounded-2xl bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 hover:brightness-110 text-white font-semibold text-sm sm:text-base shadow-[0_0_25px_rgba(244,63,94,0.5)] transition flex items-center justify-center gap-2">
+                <span>Swipe/Tap to Cut Your Cake 🎂</span>
+                <span class="swipe-hint-anim">➔</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 2: INTERACTIVE 3D CAKE CUTTING ================= -->
+        <section class="page-slide" data-page="1">
+          <div class="max-w-lg w-full flex flex-col items-center text-center h-full justify-between py-2 sm:py-6 z-10 pointer-events-none">
+            <div class="glass-card rounded-3xl px-5 py-3.5 max-w-md w-full">
+              <span class="text-xs uppercase tracking-widest text-amber-300 font-semibold">Make a Wish</span>
+              <h2 class="font-serif-display text-2xl sm:text-4xl font-bold text-white mt-0.5">
+                Swipe Across the Cake to Cut It 🎂
+              </h2>
+              <p id="cake-status-text" class="text-xs sm:text-sm text-pink-200/90 mt-1">
+                Drag your finger or mouse across the glowing cake below to blow the candles &amp; cut a slice!
+              </p>
+            </div>
+
+            <!-- Interactive Cake Slicing Touch Zone over the 3D Cake -->
+            <div id="cake-cut-zone" class="interactive relative w-72 h-64 sm:w-80 sm:h-72 rounded-3xl border-2 border-dashed border-amber-300/40 bg-rose-950/10 hover:border-amber-300/80 transition flex flex-col items-center justify-center cursor-crosshair select-none">
+              <div id="knife-hint" class="pointer-events-none flex flex-col items-center gap-1">
+                <div class="knife-guide text-4xl sm:text-5xl drop-shadow-[0_4px_12px_rgba(251,191,36,0.8)]">🔪✨</div>
+                <span class="text-xs font-medium text-amber-200 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full border border-amber-300/30">
+                  Swipe / Drag Across Here to Slice!
+                </span>
+              </div>
+            </div>
+
+            <!-- Bottom Controls for Cake Page -->
+            <div class="interactive glass-card rounded-3xl p-4 w-full max-w-md flex flex-col gap-2.5">
+              <div class="flex items-center justify-center gap-2">
+                <button id="btn-instant-cut" type="button" class="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 hover:brightness-110 text-white font-semibold text-xs sm:text-sm shadow-lg transition">
+                  🔪 Cut the Cake Now!
+                </button>
+                <button id="btn-reset-cake" type="button" class="py-2.5 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-pink-100 text-xs sm:text-sm font-medium transition">
+                  🕯️ Relight &amp; Reset
+                </button>
+              </div>
+              <button type="button" data-goto="2" class="w-full py-2.5 px-4 rounded-xl bg-rose-500/25 hover:bg-rose-500/40 border border-rose-400/40 text-pink-100 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2">
+                <span>Read My Birthday Wish Note 💌</span>
+                <span class="swipe-hint-anim">➔</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 3: HEARTFELT BIRTHDAY WISH NOTES ================= -->
+        <section class="page-slide" data-page="2">
+          <div class="interactive max-w-2xl w-full my-auto py-2 z-10">
+            <div class="note-paper rounded-3xl p-5 sm:p-8 relative overflow-hidden">
+              <!-- Decorative Corner Glow -->
+              <div class="absolute -top-12 -right-12 w-36 h-36 bg-rose-500/25 rounded-full blur-2xl pointer-events-none"></div>
+              <div class="absolute -bottom-12 -left-12 w-36 h-36 bg-amber-500/20 rounded-full blur-2xl pointer-events-none"></div>
+
+              <div class="flex items-center justify-between gap-2 border-b border-pink-300/20 pb-3 mb-4">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-2xl sm:text-3xl">💌</span>
+                  <div>
+                    <span class="text-[11px] uppercase tracking-widest text-amber-300 font-semibold block">From My Heart to Yours</span>
+                    <h2 class="font-serif-display text-2xl sm:text-3xl font-bold text-white">My Birthday Wish For You</h2>
+                  </div>
+                </div>
+                <button id="btn-heart-burst" type="button" class="px-3.5 py-1.5 rounded-full bg-rose-500/30 hover:bg-rose-500/50 border border-rose-400/40 text-xs font-semibold text-rose-100 transition flex items-center gap-1 shadow">
+                  <span>♥️</span> Send Love
+                </button>
+              </div>
+
+              <!-- Verbatim User Note -->
+              <div id="wish-note-content" class="space-y-3.5 text-sm sm:text-base leading-relaxed text-pink-50/95 font-normal max-h-[48vh] sm:max-h-[52vh] overflow-y-auto pr-1">
+                <p class="text-base sm:text-lg font-medium text-rose-200">
+                  To begin with I love you♥️😚...with depth and passion that I felt for no one in this life...and if it astonishes you it astonishes me as well🫠
+                </p>
+                <p>
+                  You are beautiful 🫰,&nbsp;<br />
+                  Giving, gentle idiotically and deliciously feminine , hot, wonderfully intelligent and wonderfully silly as well ...😚
+                </p>
+                <p>
+                  I want nothing else in this life than to be with you...to listen and watch you🫠..<br />
+                  Your beautiful voice your beauty....🫠😚♥️
+                </p>
+                <p>
+                  To argue with you... to laugh with you...to show you things and share things with you ...
+                </p>
+                <div class="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-rose-500/20 via-pink-500/15 to-amber-500/20 border border-amber-300/30 shadow-inner">
+                  <p class="font-medium text-amber-100 text-sm sm:text-base leading-relaxed">
+                    Happy birthday baby ...🥳🎊🎂
+                    mero intensions sodhdai basxau, yeti ho baby, whenever you remember me you are happy and whenever i remember you i am happy, i want to be with you forever and ever, i want to be your world, i want to be your love, i want to be your happiness, i want to be your everything...♥️
+                  </p>
+                </div>
+              </div>
+
+              <div class="mt-5 pt-3 border-t border-pink-300/15 flex flex-wrap items-center justify-between gap-2">
+                <span class="font-handwriting text-xl sm:text-2xl text-amber-300">Forever yours ♥️</span>
+                <button type="button" data-goto="3" class="py-2.5 px-5 rounded-2xl bg-gradient-to-r from-rose-500 to-amber-500 hover:brightness-110 text-white font-semibold text-xs sm:text-sm shadow-lg transition flex items-center gap-2">
+                  <span>Listen to Music</span>
+                  <span class="swipe-hint-anim">➔</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 4: 6 SELECTED SONGS TO PLAY ================= -->
+        <section class="page-slide" data-page="3">
+          <div class="interactive max-w-3xl w-full my-auto py-2 z-10">
+            <div class="glass-card rounded-3xl p-4 sm:p-6">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div>
+                  <span class="text-[11px] uppercase tracking-widest text-amber-300 font-semibold">For mero pyaro baby hamar rani..sher k sherni</span>
+                  <!-- <h2 class="font-serif-display text-2xl sm:text-3xl font-bold text-white">Selected Songs For You 🎶</h2> -->
+                </div>
+                <label class="cursor-pointer px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium text-pink-100 transition flex items-center gap-1.5">
+                  <!-- <span>📂 Add Your MP3</span> -->
+                  <input id="custom-audio-upload" type="file" accept="audio/*" multiple class="hidden" />
+                </label>
+              </div>
+
+              <!-- Now Playing Deck -->
+              <div class="rounded-2xl bg-black/45 border border-pink-400/25 p-3 sm:p-4 mb-3.5 flex flex-col sm:flex-row items-center gap-3.5">
+                <!-- Spinning Vinyl -->
+                <div id="vinyl-disc" class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr from-zinc-900 via-zinc-800 to-zinc-900 border-4 border-pink-500/40 flex items-center justify-center shadow-lg shrink-0 relative">
+                  <div class="w-6 h-6 rounded-full bg-gradient-to-r from-rose-500 to-amber-400 flex items-center justify-center text-xs">♥️</div>
+                </div>
+
+                <div class="flex-1 text-center sm:text-left min-w-0 w-full">
+                  <div class="flex items-center justify-center sm:justify-start gap-2">
+                    <span id="now-playing-badge" class="px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider bg-rose-500/30 text-rose-200 border border-rose-400/30">Ready to Play</span>
+                    <span id="now-playing-dedication" class="text-xs text-amber-200/90 truncate">Dedicated to Mero Baby 🫰</span>
+                  </div>
+                  <h3 id="now-playing-title" class="text-base sm:text-lg font-bold text-white truncate mt-0.5">Timi Nai Hau — Mero Baby</h3>
+                  <p id="now-playing-artist" class="text-xs text-pink-200/80 truncate">Nepali Acoustic Love Serenade</p>
+
+                  <!-- Progress Bar -->
+                  <div class="mt-2 flex items-center gap-2">
+                    <span id="song-time-current" class="text-[11px] text-pink-200/75 w-8 text-right">0:00</span>
+                    <div id="song-progress-bar" class="flex-1 h-1.5 bg-white/15 rounded-full overflow-hidden cursor-pointer">
+                      <div id="song-progress-fill" class="h-full w-0 bg-gradient-to-r from-rose-500 to-amber-400 rounded-full transition-all duration-150"></div>
+                    </div>
+                    <span id="song-time-total" class="text-[11px] text-pink-200/75 w-8">2:45</span>
+                  </div>
+                </div>
+
+                <!-- Transport Controls -->
+                <div class="flex items-center gap-2 shrink-0">
+                  <button id="btn-prev-song" type="button" title="Previous Song" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">⏮</button>
+                  <button id="btn-play-song" type="button" title="Play / Pause" class="w-12 h-12 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 hover:brightness-110 flex items-center justify-center text-white text-lg font-bold shadow-lg transition">▶</button>
+                  <button id="btn-next-song" type="button" title="Next Song" class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">⏭</button>
+                </div>
+              </div>
+
+              <!-- 6 Selected Songs List -->
+              <div id="songs-list-container" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[34vh] overflow-y-auto pr-1">
+                <!-- Populated by JS -->
+              </div>
+
+              <div class="mt-3.5 pt-2.5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+                <span class="text-xs text-pink-200/75">Plays your MP3 files from <code class="text-amber-300">assets/music/song1..6.mp3</code> or uploaded audio ✨</span>
+                <button type="button" data-goto="4" class="py-2 px-4 rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 hover:brightness-110 text-white font-semibold text-xs sm:text-sm shadow transition flex items-center gap-1.5">
+                  <span>See Your Photo Cards 📸</span>
+                  <span class="swipe-hint-anim">➔</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ================= PAGE 5: HER PHOTO CARDS GALLERY ================= -->
+        <section class="page-slide" data-page="4">
+          <div class="interactive max-w-5xl w-full my-auto py-2 z-10">
+            <div class="glass-card rounded-3xl p-4 sm:p-6">
+              <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div>
+                  <!-- <span class="text-[11px] uppercase tracking-widest text-amber-300 font-semibold">Forever Memories</span> -->
+                  <h2 class="font-serif-display text-2xl sm:text-3xl font-bold text-white">Precious Moments &amp; Photo Cards 💖</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                  <label class="cursor-pointer px-3.5 py-1.5 rounded-full bg-gradient-to-r from-rose-500 to-amber-500 hover:brightness-110 text-xs font-semibold text-white shadow transition flex items-center gap-1.5">
+                    <span>mero mayalu♥️</span>
+                    <input id="batch-photo-upload" type="file" accept="image/*" multiple class="hidden" />
+                  </label>
+                </div>
+              </div>
+
+              <!-- Photo Cards Grid -->
+              <div id="photo-cards-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 max-h-[54vh] overflow-y-auto p-1">
+                <!-- Populated by JS -->
+              </div>
+
+              <div class="mt-3.5 pt-2.5 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+                <p class="text-xs text-pink-200/80">
+                  <!-- 💡 Tip: Place photos in <code class="text-amber-300">assets/photos/photo1..6.jpg</code> or click <strong class="text-amber-300">📷 Replace</strong> on any card! -->
+                </p>
+                <button type="button" data-goto="0" class="py-2 px-4 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-pink-100 text-xs font-semibold transition">
+                  ↺ Replay From Beginning
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- Bottom Swipe Bar & Arrows -->
+    <footer class="interactive w-full px-4 pb-3 pt-1 flex items-center justify-between max-w-2xl mx-auto z-30">
+      <button id="btn-prev-page" type="button" class="px-3.5 py-2 rounded-full bg-black/45 hover:bg-black/65 border border-white/15 text-xs sm:text-sm font-medium text-pink-100 backdrop-blur-md transition flex items-center gap-1 disabled:opacity-35">
+        <span>←</span> <span>Prev</span>
+      </button>
+
+      <!-- Mobile/All-screen Dot Indicators -->
+      <div class="flex items-center gap-2 bg-black/45 backdrop-blur-md px-3.5 py-2 rounded-full border border-white/15">
+        <button type="button" data-goto="0" aria-label="Page 1" class="dot-indicator w-6 h-2 rounded-full bg-rose-500 transition-all"></button>
+        <button type="button" data-goto="1" aria-label="Page 2" class="dot-indicator w-2 h-2 rounded-full bg-white/35 hover:bg-white/60 transition-all"></button>
+        <button type="button" data-goto="2" aria-label="Page 3" class="dot-indicator w-2 h-2 rounded-full bg-white/35 hover:bg-white/60 transition-all"></button>
+        <button type="button" data-goto="3" aria-label="Page 4" class="dot-indicator w-2 h-2 rounded-full bg-white/35 hover:bg-white/60 transition-all"></button>
+        <button type="button" data-goto="4" aria-label="Page 5" class="dot-indicator w-2 h-2 rounded-full bg-white/35 hover:bg-white/60 transition-all"></button>
+      </div>
+
+      <button id="btn-next-page" type="button" class="px-3.5 py-2 rounded-full bg-gradient-to-r from-rose-500/80 to-amber-500/80 hover:from-rose-500 hover:to-amber-500 border border-pink-300/30 text-xs sm:text-sm font-semibold text-white backdrop-blur-md transition flex items-center gap-1 shadow-lg">
+        <span>Swipe</span> <span>→</span>
+      </button>
+    </footer>
+
+  </div>
+
+  <!-- Lightbox Modal for Photo Cards -->
+  <div id="photo-lightbox" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl hidden items-center justify-center p-4">
+    <div class="relative max-w-lg w-full bg-zinc-900/90 border border-pink-400/30 rounded-3xl p-4 sm:p-5 shadow-2xl flex flex-col items-center text-center">
+      <button id="btn-close-lightbox" type="button" class="absolute top-3 right-3 w-9 h-9 rounded-full bg-black/60 hover:bg-rose-500 text-white flex items-center justify-center text-sm font-bold transition">✕</button>
+      <img id="lightbox-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Memory" class="w-full max-h-[55vh] object-cover rounded-2xl border border-white/15 shadow-lg" />
+      <h3 id="lightbox-title" class="font-handwriting text-3xl text-amber-300 mt-3">Memory</h3>
+      <p id="lightbox-caption" class="text-sm text-pink-100/90 mt-1 max-w-md"></p>
+      <div class="mt-4 flex items-center gap-3">
+        <label class="cursor-pointer px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-xs font-semibold text-white transition">
+          <input id="lightbox-replace-input" type="file" accept="image/*" class="hidden" />
+        </label>
+        <button id="btn-lightbox-love" type="button" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-medium text-pink-100 transition">
+          ♥️ Shower Hearts
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Single-Card Upload Input -->
+  <input id="single-card-upload" type="file" accept="image/*" class="hidden" />
+  <input id="single-song-upload" type="file" accept="audio/*" class="hidden" />
+
+  <script>
+    let currentPage = 0;
+    const totalPages = 5;
+    let cakeIsCut = false;
+    let cakeCutProgress = 0;
+
+    // 6 Selected Songs with Local Deployment Paths + Web Audio API Fallback
+    const songsData = [
+      {
+        id: 0,
+        title: "Tum Se Hi",
+        artist: "Mohit Chauhan",
+        duration: 165,
+        dedication: "Timi sadhai khusi hunu, mero baby 🫰",
+        src: "./assets/music/song1.mp3",
+        tempo: 112,
+        scale: [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25],
+        pattern: [0, 2, 4, 5, 4, 2, 3, 1, 0, 4, 5, 7, 5, 4, 2, 1],
+        customAudioUrl: null
+      },
+      {
+        id: 1,
+        title: "Pehla Nasha",
+        artist: "Dreamy Piano & Warm Strings",
+        duration: 184,
+        dedication: "With depth and passion I felt for no one else ♥️",
+        src: "./assets/music/song2.mp3",
+        tempo: 104,
+        scale: [293.66, 329.63, 369.99, 440.00, 493.88, 587.33, 659.25, 739.99],
+        pattern: [0, 1, 3, 5, 4, 3, 1, 0, 2, 3, 5, 6, 5, 3, 2, 0],
+        customAudioUrl: null
+      },
+      {
+        id: 2,
+        title: "Tu hi mera",
+        artist: "Music Box Birthday Symphony",
+        duration: 140,
+        dedication: "many many happy returns of this day baby ♥️",
+        src: "./assets/music/song3.mp3",
+        tempo: 120,
+        scale: [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 466.16, 523.25],
+        pattern: [0, 0, 1, 0, 3, 2, 0, 0, 1, 0, 4, 3, 0, 0, 7, 5, 3, 2, 1, 6, 6, 5, 3, 4, 3],
+        customAudioUrl: null
+      },
+      {
+        id: 3,
+        title: "Saj ke sawar ke",
+        artist: "Starlight Harp & Celesta",
+        duration: 172,
+        dedication: "To listen and watch you... your beauty 🫠😚",
+        src: "./assets/music/song4.mp3",
+        tempo: 98,
+        scale: [220.00, 246.94, 277.18, 329.63, 369.99, 440.00, 493.88, 554.37],
+        pattern: [0, 2, 3, 5, 3, 2, 4, 2, 0, 3, 5, 7, 6, 5, 3, 2],
+        customAudioUrl: null
+      },
+      {
+        id: 4,
+        title: "Golden Hour Waltz (Just Us Two)",
+        artist: "Sunset Guitar & Lullaby Bells",
+        duration: 195,
+        dedication: "To laugh with you & share everything with you ",
+        src: "./assets/music/song5.mp3",
+        tempo: 116,
+        scale: [196.00, 220.00, 246.94, 293.66, 329.63, 392.00, 440.00, 493.88],
+        pattern: [0, 2, 4, 5, 6, 5, 4, 2, 1, 3, 5, 4, 2, 1, 0, 2],
+        customAudioUrl: null
+      },
+      {
+        id: 5,
+        title: "Baardali",
+        artist: "Eternal Love Lullaby",
+        duration: 210,
+        dedication: "Be happy sadhai vari tyo ni ma sanga ♥️",
+        src: "./assets/music/song6.mp3",
+        tempo: 92,
+        scale: [261.63, 311.13, 349.23, 392.00, 466.16, 523.25, 622.25, 698.46],
+        pattern: [0, 2, 3, 5, 4, 3, 2, 0, 1, 3, 5, 6, 5, 3, 2, 0],
+        customAudioUrl: null
+      }
+    ];
+
+    // Generate Romantic Fallback Artwork (Canvas DataURL) when local photo1..6.jpg isn't placed yet
+    function createRomanticPlaceholder(cardIndex, title, subtitle, colors, icon) {
+      const c = document.createElement('canvas');
+      c.width = 640;
+      c.height = 800;
+      const ctx = c.getContext('2d');
+
+      const grad = ctx.createLinearGradient(0, 0, c.width, c.height);
+      grad.addColorStop(0, colors[0]);
+      grad.addColorStop(0.5, colors[1]);
+      grad.addColorStop(1, colors[2]);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, c.width, c.height);
+
+      // Soft glowing bokeh orbs
+      for (let i = 0; i < 28; i++) {
+        const x = (Math.sin(i * 73.1 + cardIndex) * 0.5 + 0.5) * c.width;
+        const y = (Math.cos(i * 41.7 + cardIndex) * 0.5 + 0.5) * c.height;
+        const r = 18 + (i % 5) * 22;
+        const orb = ctx.createRadialGradient(x, y, 2, x, y, r);
+        orb.addColorStop(0, 'rgba(255, 230, 240, 0.32)');
+        orb.addColorStop(1, 'rgba(255, 230, 240, 0)');
+        ctx.fillStyle = orb;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Decorative Gold Frame
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(28, 28, c.width - 56, c.height - 56);
+
+      // Center Romantic Illustration Silhouette / Heart Glow
+      const centerGlow = ctx.createRadialGradient(c.width / 2, c.height * 0.4, 15, c.width / 2, c.height * 0.4, 190);
+      centerGlow.addColorStop(0, 'rgba(251, 191, 36, 0.45)');
+      centerGlow.addColorStop(0.6, 'rgba(244, 63, 94, 0.25)');
+      centerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = centerGlow;
+      ctx.beginPath();
+      ctx.arc(c.width / 2, c.height * 0.4, 190, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = '96px serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(icon, c.width / 2, c.height * 0.38);
+
+      // Card Title
+      ctx.fillStyle = '#fff5f7';
+      ctx.font = 'bold 36px Georgia, serif';
+      ctx.fillText(title, c.width / 2, c.height * 0.62);
+
+      // Path Hint Badge
+      ctx.fillStyle = 'rgba(253, 230, 138, 0.9)';
+      ctx.font = '500 20px sans-serif';
+      ctx.fillText(subtitle, c.width / 2, c.height * 0.69);
+
+      return c.toDataURL('image/jpeg', 0.9);
+    }
+    const photoCardsData = [
+      {
+        id: 0,
+        title: "Walking Into Forever ♥️",
+        // caption: "Holding your hand feels like the safest, happiest place in this whole world.",
+        src: "./assets/photos/photo4.jpg",
+        fallback: createRomanticPlaceholder(0, "Walking Into Forever", "assets/photos/photo1.jpg", ["#3b0728", "#831843", "#1f0826"], "👩‍❤️‍👨")
+      },
+      {
+        id: 1,
+        title: "Your Beautiful Smile 😚",
+        caption: "One smile from you is enough to light up my darkest days, mero baby.",
+        src: "./assets/photos/photo7.jpg",
+        fallback: createRomanticPlaceholder(1, "Your Beautiful Smile", "assets/photos/photo2.jpg", ["#4c0519", "#9f1239", "#2e1065"], "✨💖")
+      },
+      {
+        id: 2,
+        title: "My Favorite",
+        caption: "I want nothing else in this life than to listen and watch you forever.",
+        src: "./assets/photos/photo9.jpg",
+        fallback: createRomanticPlaceholder(2, "My Favorite", "assets/photos/photo9.jpg", ["#451a03", "#881337", "#1e1b4b"], "🌸🥰")
+      },
+      {
+        id: 3,
+        title: "Deliciously Feminine & Silly 🫰",
+        caption: "Giving, gentle, hot, wonderfully intelligent and wonderfully silly as well.",
+        src: "./assets/photos/photo2.jpg",
+        fallback: createRomanticPlaceholder(3, "Wonderfully You", "assets/photos/photo2.jpg", ["#500724", "#701a75", "#0f172a"], "👑🌹")
+      },
+      {
+        id: 5,
+        title: "My World, My Everything 🎂",
+        caption: "Whenever you remember me you are happy, and whenever I remember you I am happy.",
+        src: "./assets/photos/photo8.jpg",
+        fallback: createRomanticPlaceholder(5, "My Everything", "assets/photos/photo6.jpg", ["#3b0764", "#be123c", "#18181b"], "🎂♥️")
+      }
+    ];
+
+    /*************************************************************************
+     * 2. AUDIO PLAYER ENGINE
+     * Plays real MP3 files when available. If a local MP3 is missing,
+     * it automatically plays a generated melody so the player still works.
+     *************************************************************************/
+    let currentSongIndex = 0;
+    let isPlaying = false;
+    let activeUploadSongIndex = 0;
+    let synthMode = false;
+    let audioContext = null;
+    let synthTimer = null;
+    let synthStartedAt = 0;
+    let synthElapsed = 0;
+    let synthLastNote = -1;
+    let activeSynthNodes = [];
+
+    const htmlAudio = new Audio();
+    htmlAudio.preload = "metadata";
+
+    const vinylDisc = document.getElementById('vinyl-disc');
+    const nowPlayingBadge = document.getElementById('now-playing-badge');
+    const nowPlayingDedication = document.getElementById('now-playing-dedication');
+    const nowPlayingTitle = document.getElementById('now-playing-title');
+    const nowPlayingArtist = document.getElementById('now-playing-artist');
+    const songTimeCurrent = document.getElementById('song-time-current');
+    const songTimeTotal = document.getElementById('song-time-total');
+    const songProgressBar = document.getElementById('song-progress-bar');
+    const songProgressFill = document.getElementById('song-progress-fill');
+    const btnPlaySong = document.getElementById('btn-play-song');
+    const btnPrevSong = document.getElementById('btn-prev-song');
+    const btnNextSong = document.getElementById('btn-next-song');
+    const songsListContainer = document.getElementById('songs-list-container');
+    const customAudioUpload = document.getElementById('custom-audio-upload');
+    const singleSongUpload = document.getElementById('single-song-upload');
+
+    function formatTime(sec) {
+      const s = Math.max(0, Math.floor(Number(sec) || 0));
+      const mins = Math.floor(s / 60);
+      const rem = s % 60;
+      return mins + ":" + (rem < 10 ? "0" + rem : rem);
+    }
+
+    function updateProgressUI(current, total) {
+      songTimeCurrent.textContent = formatTime(current);
+      songTimeTotal.textContent = formatTime(total);
+      const pct = total > 0 ? Math.min(100, (current / total) * 100) : 0;
+      songProgressFill.style.width = pct + "%";
+    }
+
+    function updatePlayerHeaderUI() {
+      const song = songsData[currentSongIndex];
+      nowPlayingTitle.textContent = song.title;
+      nowPlayingArtist.textContent = song.artist || "A song dedicated to you ♥️";
+      nowPlayingDedication.textContent = song.dedication;
+
+      const total = synthMode
+        ? song.duration
+        : (Number.isFinite(htmlAudio.duration) && htmlAudio.duration > 0
+          ? htmlAudio.duration : song.duration);
+
+      if (isPlaying) {
+        btnPlaySong.textContent = "⏸";
+        vinylDisc.classList.add("vinyl-spinning");
+        nowPlayingBadge.textContent = synthMode ? "Melody Mode ♪" : "Now Playing ♥️";
+      } else {
+        btnPlaySong.textContent = "▶";
+        vinylDisc.classList.remove("vinyl-spinning");
+        if (nowPlayingBadge.textContent !== "Couldn't Play — Check MP3" &&
+            nowPlayingBadge.textContent !== "MP3 Missing or Unsupported") {
+          nowPlayingBadge.textContent = "Ready to Play";
+        }
+      }
+      songTimeTotal.textContent = formatTime(total);
+      renderSongsList();
+    }
+
+    function renderSongsList() {
+      songsListContainer.innerHTML = "";
+      songsData.forEach((song, idx) => {
+        const isCurrent = idx === currentSongIndex;
+        const card = document.createElement('div');
+        card.className = `p-2.5 sm:p-3 rounded-2xl border transition flex items-center justify-between gap-2 cursor-pointer ${
+          isCurrent
+            ? 'bg-gradient-to-r from-rose-500/35 to-amber-500/25 border-amber-300/60 shadow-md'
+            : 'bg-white/5 hover:bg-white/10 border-white/10'
+        } ${isCurrent && isPlaying ? 'playing' : ''}`;
+
+        const info = document.createElement('div');
+        info.className = 'flex items-center gap-2.5 min-w-0 flex-1';
+
+        const number = document.createElement('div');
+        number.className = `w-8 h-8 rounded-xl ${isCurrent ? 'bg-rose-500 text-white' : 'bg-white/10 text-pink-200'} flex items-center justify-center text-xs font-bold shrink-0`;
+        number.textContent = isCurrent && isPlaying ? '♫' : String(idx + 1);
+
+        const textWrap = document.createElement('div');
+        textWrap.className = 'min-w-0 flex-1';
+
+        const title = document.createElement('div');
+        title.className = 'text-xs sm:text-sm font-semibold text-white truncate';
+        title.textContent = song.title;
+
+        const subtitle = document.createElement('div');
+        subtitle.className = 'text-[11px] text-pink-200/70 truncate';
+        subtitle.textContent = song.customAudioUrl
+          ? 'Custom audio loaded'
+          : (song.artist || 'Tap to play melody fallback');
+
+        textWrap.append(title, subtitle);
+        info.append(number, textWrap);
+
+        const actions = document.createElement('div');
+        actions.className = 'flex items-center gap-2 shrink-0';
+
+        const eq = document.createElement('div');
+        eq.className = 'flex items-end gap-0.5 h-4 w-4';
+        for (let i = 0; i < 4; i++) {
+          const bar = document.createElement('span');
+          bar.className = 'eq-bar';
+          eq.appendChild(bar);
+        }
+
+        const upload = document.createElement('button');
+        upload.type = 'button';
+        upload.dataset.uploadSong = String(idx);
+        upload.title = 'Upload an MP3 for this song';
+        upload.className = 'px-2 py-1 rounded-lg bg-white/10 hover:bg-white/25 text-[10px] text-amber-200 font-medium transition';
+        upload.textContent = '📂 MP3';
+
+        actions.append(eq, upload);
+        card.append(info, actions);
+
+        card.addEventListener('click', (e) => {
+          const uploadBtn = e.target.closest('[data-upload-song]');
+          if (uploadBtn) {
+            e.stopPropagation();
+            activeUploadSongIndex = idx;
+            singleSongUpload.value = '';
+            singleSongUpload.click();
+            return;
+          }
+          if (currentSongIndex === idx && isPlaying) {
+            togglePlayPause();
+          } else {
+            selectAndPlaySong(idx);
+          }
+        });
+
+        songsListContainer.appendChild(card);
+      });
+    }
+
+    function stopSynthPlayback() {
+      if (synthTimer) {
+        clearInterval(synthTimer);
+        synthTimer = null;
+      }
+      activeSynthNodes.forEach(({ oscillator, gain }) => {
+        try {
+          gain.gain.cancelScheduledValues(audioContext.currentTime);
+          gain.gain.setTargetAtTime(0, audioContext.currentTime, 0.025);
+          oscillator.stop(audioContext.currentTime + 0.1);
+        } catch (_) {}
+      });
+      activeSynthNodes = [];
+    }
+
+    function playSynthNote(frequency, duration) {
+      if (!audioContext) return;
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+      gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.12, audioContext.currentTime + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + duration);
+      oscillator.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + duration + 0.03);
+      activeSynthNodes.push({ oscillator, gain });
+      if (activeSynthNodes.length > 12) activeSynthNodes.splice(0, activeSynthNodes.length - 8);
+    }
+
+    async function startSynthPlayback(resume = false) {
+      const song = songsData[currentSongIndex];
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) {
+        nowPlayingBadge.textContent = "Browser Audio Not Supported";
+        isPlaying = false;
+        updatePlayerHeaderUI();
+        return;
+      }
+
+      try {
+        if (!audioContext) audioContext = new AudioContextClass();
+        await audioContext.resume();
+      } catch (error) {
+        console.error("Could not start Web Audio:", error);
+        nowPlayingBadge.textContent = "Tap Play to Enable Audio";
+        isPlaying = false;
+        updatePlayerHeaderUI();
+        return;
+      }
+
+      synthMode = true;
+      isPlaying = true;
+      synthStartedAt = performance.now() / 1000;
+      synthLastNote = -1;
+      nowPlayingBadge.textContent = "Melody Mode — MP3 Not Found";
+      updatePlayerHeaderUI();
+
+      const beatSeconds = 60 / (song.tempo || 100);
+      const tick = () => {
+        if (!isPlaying || !synthMode) return;
+        synthElapsed += (performance.now() / 1000 - synthStartedAt);
+        synthStartedAt = performance.now() / 1000;
+
+        if (synthElapsed >= song.duration) {
+          synthElapsed = 0;
+          synthLastNote = -1;
+        }
+
+        const noteIndex = Math.floor(synthElapsed / beatSeconds);
+        if (noteIndex !== synthLastNote) {
+          synthLastNote = noteIndex;
+          const pattern = song.pattern || [0, 2, 4, 5, 4, 2, 1, 3];
+          const scale = song.scale || [261.63, 293.66, 329.63, 392, 440, 523.25];
+          const degree = pattern[noteIndex % pattern.length] % scale.length;
+          playSynthNote(scale[degree], Math.min(beatSeconds * 0.82, 0.5));
+        }
+
+        updateProgressUI(synthElapsed, song.duration);
+      };
+
+      stopSynthPlayback();
+      synthStartedAt = performance.now() / 1000;
+      synthTimer = setInterval(tick, 80);
+      tick();
+    }
+
+    async function selectAndPlaySong(index) {
+      currentSongIndex = (index + songsData.length) % songsData.length;
+      const song = songsData[currentSongIndex];
+      const targetSrc = song.customAudioUrl || song.src;
+
+      htmlAudio.pause();
+      stopSynthPlayback();
+      synthMode = false;
+      synthElapsed = 0;
+      synthLastNote = -1;
+      isPlaying = false;
+      updateProgressUI(0, song.duration);
+      nowPlayingTitle.textContent = song.title;
+      nowPlayingArtist.textContent = song.artist || "A song dedicated to you ♥️";
+      nowPlayingDedication.textContent = song.dedication;
+      nowPlayingBadge.textContent = "Loading Song...";
+      renderSongsList();
+
+      // Try the actual MP3 first. Missing local files automatically use a
+      // generated melody; upload your own MP3 to hear the real recording.
+      if (targetSrc) {
+        try {
+          htmlAudio.src = targetSrc;
+          htmlAudio.load();
+          await htmlAudio.play();
+          synthMode = false;
+          isPlaying = true;
+          updatePlayerHeaderUI();
+          return;
+        } catch (error) {
+          console.warn("MP3 unavailable; switching to generated melody:", targetSrc, error);
+        }
+      }
+
+      nowPlayingBadge.textContent = "MP3 Not Found — Starting Melody";
+      await startSynthPlayback(false);
+    }
+
+    async function togglePlayPause() {
+      if (isPlaying) {
+        if (synthMode) {
+          const now = performance.now() / 1000;
+          synthElapsed += Math.max(0, now - synthStartedAt);
+          isPlaying = false;
+          stopSynthPlayback();
+          nowPlayingBadge.textContent = "Melody Paused";
+          updatePlayerHeaderUI();
+        } else {
+          htmlAudio.pause();
+        }
+        return;
+      }
+
+      if (synthMode) {
+        await startSynthPlayback(true);
+      } else if (htmlAudio.src && !htmlAudio.error &&
+                 htmlAudio.currentTime > 0 && !htmlAudio.ended) {
+        try {
+          await htmlAudio.play();
+        } catch (error) {
+          await startSynthPlayback(false);
+        }
+      } else {
+        await selectAndPlaySong(currentSongIndex);
+      }
+    }
+
+    htmlAudio.addEventListener("play", () => {
+      if (synthMode) return;
+      isPlaying = true;
+      updatePlayerHeaderUI();
+    });
+
+    htmlAudio.addEventListener("pause", () => {
+      if (synthMode) return;
+      isPlaying = false;
+      updatePlayerHeaderUI();
+    });
+
+    htmlAudio.addEventListener("timeupdate", () => {
+      if (synthMode) return;
+      const total = Number.isFinite(htmlAudio.duration) && htmlAudio.duration > 0
+        ? htmlAudio.duration : songsData[currentSongIndex].duration;
+      updateProgressUI(htmlAudio.currentTime, total);
+    });
+
+    htmlAudio.addEventListener("loadedmetadata", () => {
+      if (synthMode) return;
+      const duration = htmlAudio.duration;
+      if (Number.isFinite(duration) && duration > 0) {
+        songsData[currentSongIndex].duration = Math.round(duration);
+        songTimeTotal.textContent = formatTime(duration);
+        updateProgressUI(htmlAudio.currentTime, duration);
+      }
+    });
+
+    htmlAudio.addEventListener("ended", () => {
+      if (!synthMode) selectAndPlaySong((currentSongIndex + 1) % songsData.length);
+    });
+
+    htmlAudio.addEventListener("error", () => {
+      // The play() rejection handler starts melody fallback; avoid a duplicate
+      // fallback from this asynchronous media error event.
+      if (synthMode || isPlaying) return;
+      console.warn("Audio file could not be loaded:", htmlAudio.currentSrc || htmlAudio.src);
+    });
+
+    btnPlaySong.addEventListener("click", togglePlayPause);
+    btnPrevSong.addEventListener("click", () => selectAndPlaySong(currentSongIndex - 1));
+    btnNextSong.addEventListener("click", () => selectAndPlaySong(currentSongIndex + 1));
+
+    songProgressBar.addEventListener("click", (e) => {
+      const song = songsData[currentSongIndex];
+      const rect = songProgressBar.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+
+      if (synthMode) {
+        synthElapsed = ratio * song.duration;
+        synthStartedAt = performance.now() / 1000;
+        synthLastNote = -1;
+        updateProgressUI(synthElapsed, song.duration);
+      } else if (Number.isFinite(htmlAudio.duration) && htmlAudio.duration > 0) {
+        htmlAudio.currentTime = ratio * htmlAudio.duration;
+        updateProgressUI(htmlAudio.currentTime, htmlAudio.duration);
+      }
+    });
+
+    function attachUploadedAudio(index, file) {
+      if (!file) return;
+      if (songsData[index].customAudioUrl &&
+          songsData[index].customAudioUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(songsData[index].customAudioUrl);
+      }
+      songsData[index].customAudioUrl = URL.createObjectURL(file);
+      songsData[index].title = file.name.replace(/\.[^/.]+$/, "");
+      songsData[index].artist = "Uploaded from Your Device ♥️";
+      selectAndPlaySong(index);
+    }
+
+    customAudioUpload.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []).filter(file =>
+        file.type.startsWith('audio/') || /\.(mp3|wav|ogg|m4a|aac|flac)$/i.test(file.name)
+      );
+      if (!files.length) return;
+      files.slice(0, songsData.length).forEach((file, idx) => {
+        const targetIdx = (currentSongIndex + idx) % songsData.length;
+        attachUploadedAudio(targetIdx, file);
+      });
+      e.target.value = '';
+    });
+
+    singleSongUpload.addEventListener('change', (e) => {
+      const file = (e.target.files || [])[0];
+      if (file) attachUploadedAudio(activeUploadSongIndex, file);
+      e.target.value = '';
+    });
+
+    /*************************************************************************
+     * 3. PHOTO CARDS GALLERY & LIGHTBOX (Local Paths + Upload + 3D Tilt)
+     *************************************************************************/
+    const photoCardsGrid = document.getElementById('photo-cards-grid');
+    const photoLightbox = document.getElementById('photo-lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxTitle = document.getElementById('lightbox-title');
+    const lightboxCaption = document.getElementById('lightbox-caption');
+    const btnCloseLightbox = document.getElementById('btn-close-lightbox');
+    const btnLightboxLove = document.getElementById('btn-lightbox-love');
+    const lightboxReplaceInput = document.getElementById('lightbox-replace-input');
+    const singleCardUpload = document.getElementById('single-card-upload');
+    const batchPhotoUpload = document.getElementById('batch-photo-upload');
+
+    let activePhotoCardIndex = 0;
+
+    function getResolvedPhotoSrc(card) {
+      return card.customUrl || card.src;
+    }
+
+    function renderPhotoCards() {
+      photoCardsGrid.innerHTML = "";
+      photoCardsData.forEach((card, index) => {
+        const cardEl = document.createElement('div');
+        cardEl.className = "photo-card-3d group relative rounded-2xl overflow-hidden border border-pink-300/25 bg-black/50 shadow-xl cursor-pointer flex flex-col";
+
+        const imgEl = document.createElement('img');
+        imgEl.alt = card.title;
+        imgEl.className = "w-full h-36 sm:h-44 object-cover transition duration-500 group-hover:scale-105";
+        imgEl.src = getResolvedPhotoSrc(card);
+        imgEl.onerror = () => {
+          if (imgEl.src !== card.fallback) {
+            imgEl.src = card.fallback;
+          }
+        };
+
+        const overlay = document.createElement('div');
+        overlay.className = "p-2.5 sm:p-3 bg-gradient-to-t from-black/95 via-black/70 to-transparent flex flex-col justify-between flex-1";
+        overlay.innerHTML = `
+          <div>
+            <h3 class="font-handwriting text-lg sm:text-xl text-amber-300 leading-tight truncate">${card.title}</h3>
+            <p class="text-[11px] text-pink-100/85 line-clamp-2 mt-0.5">${card.caption}</p>
+          </div>
+          <div class="mt-2 pt-1.5 border-t border-white/10 flex items-center justify-between gap-1">
+            <span class="text-[10px] text-pink-200/70 truncate">${card.customUrl ? 'Custom Photo ♥️' : card.src}</span>
+            <button type="button" data-replace-photo="${index}" class="px-2 py-0.5 rounded-full bg-rose-500/40 hover:bg-rose-500 text-[10px] font-semibold text-white transition shrink-0">
+              📷 Replace
+            </button>
+          </div>
+        `;
+
+        // Interactive 3D tilt effect on pointer move
+        cardEl.addEventListener('mousemove', (e) => {
+          const rect = cardEl.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width - 0.5;
+          const y = (e.clientY - rect.top) / rect.height - 0.5;
+          cardEl.style.transform = `perspective(600px) rotateY(${x * 12}deg) rotateX(${-y * 12}deg) scale(1.02)`;
+        });
+        cardEl.addEventListener('mouseleave', () => {
+          cardEl.style.transform = 'perspective(600px) rotateY(0deg) rotateX(0deg) scale(1)';
+        });
+
+        cardEl.addEventListener('click', (e) => {
+          const replaceBtn = e.target.closest('[data-replace-photo]');
+          if (replaceBtn) {
+            e.stopPropagation();
+            activePhotoCardIndex = index;
+            singleCardUpload.click();
+            return;
+          }
+          openPhotoLightbox(index, imgEl.src);
+        });
+
+        cardEl.appendChild(imgEl);
+        cardEl.appendChild(overlay);
+        photoCardsGrid.appendChild(cardEl);
+      });
+    }
+
+    function openPhotoLightbox(index, currentDisplayedSrc) {
+      activePhotoCardIndex = index;
+      const card = photoCardsData[index];
+      lightboxImg.src = currentDisplayedSrc || getResolvedPhotoSrc(card);
+      lightboxImg.onerror = () => {
+        lightboxImg.src = card.fallback;
+      };
+      lightboxTitle.textContent = card.title;
+      lightboxCaption.textContent = card.caption;
+      photoLightbox.classList.remove('hidden');
+      photoLightbox.classList.add('flex');
+    }
+
+    function closePhotoLightbox() {
+      photoLightbox.classList.add('hidden');
+      photoLightbox.classList.remove('flex');
+    }
+
+    btnCloseLightbox.addEventListener('click', closePhotoLightbox);
+    photoLightbox.addEventListener('click', (e) => {
+      if (e.target === photoLightbox) closePhotoLightbox();
+    });
+
+    btnLightboxLove.addEventListener('click', () => {
+      spawnHeartBurst(window.innerWidth / 2, window.innerHeight / 2, 36);
+    });
+
+    function replaceSinglePhoto(index, file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        photoCardsData[index].customUrl = ev.target.result;
+        renderPhotoCards();
+        if (!photoLightbox.classList.contains('hidden') && activePhotoCardIndex === index) {
+          lightboxImg.src = ev.target.result;
+        }
+        spawnHeartBurst(window.innerWidth / 2, window.innerHeight / 2, 20);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    singleCardUpload.addEventListener('change', (e) => {
+      const file = (e.target.files || [])[0];
+      if (file) replaceSinglePhoto(activePhotoCardIndex, file);
+    });
+
+    lightboxReplaceInput.addEventListener('change', (e) => {
+      const file = (e.target.files || [])[0];
+      if (file) replaceSinglePhoto(activePhotoCardIndex, file);
+    });
+
+    batchPhotoUpload.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      files.slice(0, photoCardsData.length).forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          photoCardsData[idx].customUrl = ev.target.result;
+          renderPhotoCards();
+        };
+        reader.readAsDataURL(file);
+      });
+      spawnHeartBurst(window.innerWidth / 2, window.innerHeight / 2, 30);
+    });
+
+    /*************************************************************************
+     * 4. SWIPEABLE 5-PAGE NAVIGATION & CAMERA TRANSITIONS
+     *************************************************************************/
+    const pagesViewport = document.getElementById('pages-viewport');
+    const pagesTrack = document.getElementById('pages-track');
+    const btnPrevPage = document.getElementById('btn-prev-page');
+    const btnNextPage = document.getElementById('btn-next-page');
+    const dotIndicators = document.querySelectorAll('.dot-indicator');
+
+    function goToPage(pageIndex) {
+      currentPage = Math.max(0, Math.min(totalPages - 1, pageIndex));
+      pagesTrack.style.transform = `translateX(-${currentPage * 20}%)`;
+
+      btnPrevPage.disabled = currentPage === 0;
+      btnNextPage.innerHTML = currentPage === totalPages - 1
+        ? `<span>Replay</span> <span>↺</span>`
+        : `<span>Swipe</span> <span>→</span>`;
+
+      dotIndicators.forEach((dot, idx) => {
+        if (idx === currentPage) {
+          dot.className = "dot-indicator w-6 h-2 rounded-full bg-rose-500 transition-all";
+        } else {
+          dot.className = "dot-indicator w-2 h-2 rounded-full bg-white/35 hover:bg-white/60 transition-all";
+        }
+      });
+    }
+
+    document.querySelectorAll('[data-goto]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const target = parseInt(btn.getAttribute('data-goto'), 10);
+        goToPage(target);
+      });
+    });
+
+    btnPrevPage.addEventListener('click', () => goToPage(currentPage - 1));
+    btnNextPage.addEventListener('click', () => {
+      if (currentPage === totalPages - 1) {
+        goToPage(0);
+      } else {
+        goToPage(currentPage + 1);
+      }
+    });
+
+    // Horizontal swipe gesture on viewport (ignoring cake cut zone)
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isSwipingPage = false;
+
+    pagesViewport.addEventListener('touchstart', (e) => {
+      if (e.target.closest('#cake-cut-zone')) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      isSwipingPage = true;
+    }, { passive: true });
+
+    pagesViewport.addEventListener('touchend', (e) => {
+      if (!isSwipingPage) return;
+      isSwipingPage = false;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+        if (dx < 0 && currentPage < totalPages - 1) goToPage(currentPage + 1);
+        if (dx > 0 && currentPage > 0) goToPage(currentPage - 1);
+      }
+    }, { passive: true });
+
+    /*************************************************************************
+     * 5. 2D FX OVERLAY CANVAS (Knife Slice Trail, Confetti & Heart Bursts)
+     *************************************************************************/
+    const fxCanvas = document.getElementById('fx-canvas');
+    const fxCtx = fxCanvas.getContext('2d');
+    const fxParticles = [];
+    const sliceTrail = [];
+
+    function resizeFxCanvas() {
+      fxCanvas.width = window.innerWidth;
+      fxCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeFxCanvas);
+    resizeFxCanvas();
+
+    function spawnSparkles(x, y, count = 14) {
+      const colors = ['#fbbf24', '#f43f5e', '#f472b6', '#fff1f2', '#fde047'];
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 1.5 + Math.random() * 5.5;
+        fxParticles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1.2,
+          size: 3 + Math.random() * 4,
+          color: colors[i % colors.length],
+          alpha: 1,
+          type: 'sparkle'
+        });
+      }
+    }
+
+    function spawnHeartBurst(x, y, count = 28) {
+      const emojis = ['♥️', '💖', '😚', '🫰', '✨', '🌸'];
+      for (let i = 0; i < count; i++) {
+        const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.4;
+        const speed = 2.5 + Math.random() * 6.5;
+        fxParticles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 2,
+          size: 16 + Math.random() * 14,
+          text: emojis[i % emojis.length],
+          alpha: 1,
+          type: 'emoji'
+        });
+      }
+    }
+
+    document.getElementById('btn-heart-burst').addEventListener('click', (e) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      spawnHeartBurst(rect.left + rect.width / 2, rect.top + rect.height / 2, 32);
+    });
+
+    /*************************************************************************
+     * 6. 3D LIVING WORLD (Three.js Cake, Candles, Slice Wedge, Balloons & Petals)
+     *************************************************************************/
+    const webglContainer = document.getElementById('webgl-container');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x0f0514, 0.035);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2.2, 8.5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    webglContainer.appendChild(renderer.domElement);
+
+    // Warm Romantic Lighting
+    const ambientLight = new THREE.AmbientLight(0xffd6e7, 0.78);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfff0dd, 1.15);
+    dirLight.position.set(5, 10, 7);
+    scene.add(dirLight);
+
+    const candlePointLight = new THREE.PointLight(0xffae42, 1.6, 12);
+    candlePointLight.position.set(0, 2.6, 0);
+    scene.add(candlePointLight);
+
+    // 3D Birthday Cake Group
+    const cakeGroup = new THREE.Group();
+    cakeGroup.position.set(0, -0.35, 0);
+    scene.add(cakeGroup);
+
+    const cakeMainBody = new THREE.Group();
+    const cakeSliceGroup = new THREE.Group();
+    cakeGroup.add(cakeMainBody);
+    cakeGroup.add(cakeSliceGroup);
+
+    const sliceAngle = Math.PI / 3.2; // ~56 deg removable wedge
+
+    // Golden Cake Plate
+    const plateGeo = new THREE.CylinderGeometry(2.35, 2.5, 0.14, 48);
+    const plateMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.65, roughness: 0.25 });
+    const plateMesh = new THREE.Mesh(plateGeo, plateMat);
+    plateMesh.position.y = -0.65;
+    cakeGroup.add(plateMesh);
+
+    // Bottom Tier (Main + Slice Wedge)
+    const tier1Mat = new THREE.MeshStandardMaterial({ color: 0xf43f5e, roughness: 0.45 });
+    const tier1Main = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.75, 1.75, 0.95, 48, 1, false, sliceAngle, Math.PI * 2 - sliceAngle),
+      tier1Mat
+    );
+    tier1Main.position.y = -0.1;
+    cakeMainBody.add(tier1Main);
+
+    const tier1Slice = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.75, 1.75, 0.95, 24, 1, false, 0, sliceAngle),
+      tier1Mat
+    );
+    tier1Slice.position.y = -0.1;
+    cakeSliceGroup.add(tier1Slice);
+
+    // Top Tier (Creamy Pink)
+    const tier2Mat = new THREE.MeshStandardMaterial({ color: 0xffe4e6, roughness: 0.4 });
+    const tier2Main = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.22, 1.22, 0.82, 48, 1, false, sliceAngle, Math.PI * 2 - sliceAngle),
+      tier2Mat
+    );
+    tier2Main.position.y = 0.78;
+    cakeMainBody.add(tier2Main);
+
+    const tier2Slice = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.22, 1.22, 0.82, 24, 1, false, 0, sliceAngle),
+      tier2Mat
+    );
+    tier2Slice.position.y = 0.78;
+    cakeSliceGroup.add(tier2Slice);
+
+    // Frosting Pearls & Berries on Top
+    const berryGeo = new THREE.SphereGeometry(0.11, 16, 16);
+    const berryMat = new THREE.MeshStandardMaterial({ color: 0xe11d48, roughness: 0.25 });
+    for (let i = 0; i < 12; i++) {
+      const ang = (i / 12) * Math.PI * 2;
+      const berry = new THREE.Mesh(berryGeo, berryMat);
+      berry.position.set(Math.cos(ang) * 0.95, 1.22, Math.sin(ang) * 0.95);
+      if (ang < sliceAngle) {
+        cakeSliceGroup.add(berry);
+      } else {
+        cakeMainBody.add(berry);
+      }
+    }
+
+    // 5 Glowing Candles on Top Tier
+    const candleFlames = [];
+    const candlePositions = [
+      [0, 0],
+      [0.48, 0.48],
+      [-0.48, 0.48],
+      [0.48, -0.48],
+      [-0.48, -0.48]
+    ];
+    candlePositions.forEach(([cx, cz]) => {
+      const candle = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.055, 0.055, 0.55, 16),
+        new THREE.MeshStandardMaterial({ color: 0xfef3c7, roughness: 0.3 })
+      );
+      candle.position.set(cx, 1.45, cz);
+      cakeMainBody.add(candle);
+
+      const flame = new THREE.Mesh(
+        new THREE.SphereGeometry(0.09, 12, 12),
+        new THREE.MeshBasicMaterial({ color: 0xfbbf24 })
+      );
+      flame.scale.set(0.75, 1.6, 0.75);
+      flame.position.set(cx, 1.82, cz);
+      cakeMainBody.add(flame);
+      candleFlames.push(flame);
+    });
+
+    // 3D Floating Balloons
+    const balloons = [];
+    const balloonColors = [0xf43f5e, 0xfbbf24, 0xec4899, 0xfb7185, 0xc084fc];
+    const balloonGeo = new THREE.SphereGeometry(0.42, 24, 24);
+
+    function createBalloon(yOffset = 0) {
+      const mat = new THREE.MeshStandardMaterial({
+        color: balloonColors[Math.floor(Math.random() * balloonColors.length)],
+        roughness: 0.25,
+        metalness: 0.15
+      });
+      const mesh = new THREE.Mesh(balloonGeo, mat);
+      mesh.scale.set(1, 1.22, 1);
+      mesh.position.set(
+        (Math.random() - 0.5) * 11,
+        -4 + Math.random() * 8 + yOffset,
+        -2 - Math.random() * 5
+      );
+      mesh.userData = {
+        speedY: 0.012 + Math.random() * 0.018,
+        swayOffset: Math.random() * Math.PI * 2
+      };
+      scene.add(mesh);
+      balloons.push(mesh);
+    }
+    for (let i = 0; i < 18; i++) createBalloon();
+
+    // 3D Flower Petals Rain
+    const petals = [];
+    const petalGeo = new THREE.PlaneGeometry(0.16, 0.16);
+    const petalColors = [0xfda4af, 0xf43f5e, 0xfef08a, 0xf9a8d4];
+
+    function createPetal(boostY = false) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: petalColors[Math.floor(Math.random() * petalColors.length)],
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.88
+      });
+      const petal = new THREE.Mesh(petalGeo, mat);
+      petal.position.set(
+        (Math.random() - 0.5) * 14,
+        boostY ? 5 + Math.random() * 4 : (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 6
+      );
+      petal.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+      petal.userData = {
+        fallSpeed: 0.018 + Math.random() * 0.025,
+        rotSpeed: 0.02 + Math.random() * 0.04
+      };
+      scene.add(petal);
+      petals.push(petal);
+    }
+    for (let i = 0; i < 75; i++) createPetal(false);
+
+    // Quick Action Buttons on Page 1
+    document.getElementById('btn-burst-balloons').addEventListener('click', () => {
+      balloons.forEach((b) => {
+        b.userData.speedY = 0.065 + Math.random() * 0.04;
+      });
+      for (let i = 0; i < 6; i++) createBalloon(-3);
+      spawnHeartBurst(window.innerWidth / 2, window.innerHeight * 0.7, 22);
+    });
+
+    document.getElementById('btn-petal-blizzard').addEventListener('click', () => {
+      for (let i = 0; i < 35; i++) createPetal(true);
+      spawnSparkles(window.innerWidth / 2, window.innerHeight * 0.35, 28);
+    });
+
+    /*************************************************************************
+     * 7. INTERACTIVE CAKE CUTTING MECHANICS (Page 2)
+     *************************************************************************/
+    const cakeCutZone = document.getElementById('cake-cut-zone');
+    const cakeStatusText = document.getElementById('cake-status-text');
+    const knifeHint = document.getElementById('knife-hint');
+    const btnInstantCut = document.getElementById('btn-instant-cut');
+    const btnResetCake = document.getElementById('btn-reset-cake');
+
+    let isDraggingKnife = false;
+
+    function triggerCakeCutSuccess() {
+      if (cakeIsCut) return;
+      cakeIsCut = true;
+      cakeCutProgress = 1;
+      candleFlames.forEach((f) => { f.visible = false; });
+      candlePointLight.intensity = 0.25;
+      knifeHint.classList.add('opacity-0');
+      cakeStatusText.innerHTML = "🎉 <strong class='text-amber-300'>Happy Birthday Mero Baby!</strong> Your wish is on its way to the stars ♥️";
+      spawnHeartBurst(window.innerWidth / 2, window.innerHeight / 2, 42);
+      spawnSparkles(window.innerWidth / 2, window.innerHeight / 2, 36);
+
+    }
+
+    function resetCakeState() {
+      cakeIsCut = false;
+      cakeCutProgress = 0;
+      cakeSliceGroup.position.set(0, 0, 0);
+      candleFlames.forEach((f) => { f.visible = true; });
+      candlePointLight.intensity = 1.6;
+      knifeHint.classList.remove('opacity-0');
+      cakeStatusText.textContent = "Drag your finger or mouse across the glowing cake below to blow the candles & cut a slice!";
+    }
+
+    function recordKnifePoint(clientX, clientY) {
+      sliceTrail.push({ x: clientX, y: clientY, alpha: 1 });
+      spawnSparkles(clientX, clientY, 3);
+      cakeCutProgress += 0.045;
+      if (cakeCutProgress >= 1) {
+        triggerCakeCutSuccess();
+      }
+    }
+
+    cakeCutZone.addEventListener('mousedown', (e) => {
+      isDraggingKnife = true;
+      recordKnifePoint(e.clientX, e.clientY);
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (isDraggingKnife && currentPage === 1) {
+        recordKnifePoint(e.clientX, e.clientY);
+      }
+    });
+    window.addEventListener('mouseup', () => {
+      isDraggingKnife = false;
+    });
+
+    cakeCutZone.addEventListener('touchstart', (e) => {
+      isDraggingKnife = true;
+      const t = e.touches[0];
+      recordKnifePoint(t.clientX, t.clientY);
+    }, { passive: true });
+
+    cakeCutZone.addEventListener('touchmove', (e) => {
+      if (!isDraggingKnife) return;
+      const t = e.touches[0];
+      recordKnifePoint(t.clientX, t.clientY);
+    }, { passive: true });
+
+    cakeCutZone.addEventListener('touchend', () => {
+      isDraggingKnife = false;
+    });
+
+    btnInstantCut.addEventListener('click', triggerCakeCutSuccess);
+    btnResetCake.addEventListener('click', resetCakeState);
+
+    /*************************************************************************
+     * 8. MAIN ANIMATION LOOP (3D World + 2D Sparkle/Heart FX)
+     *************************************************************************/
+    let clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+
+      // Smoothly position camera based on active page
+      const targetCamZ = currentPage === 1 ? 6.2 : 8.4;
+      const targetCamY = currentPage === 1 ? 2.45 : 2.1;
+      camera.position.z += (targetCamZ - camera.position.z) * 0.05;
+      camera.position.y += (targetCamY - camera.position.y) * 0.05;
+      camera.lookAt(0, 0.35, 0);
+
+      // Rotate cake gently
+      cakeGroup.rotation.y = elapsed * 0.38;
+
+      // Animate cut slice sliding outward
+      if (cakeIsCut) {
+        const halfAngle = sliceAngle * 0.5;
+        const targetX = Math.sin(halfAngle) * 0.68;
+        const targetZ = Math.cos(halfAngle) * 0.68;
+        cakeSliceGroup.position.x += (targetX - cakeSliceGroup.position.x) * 0.08;
+        cakeSliceGroup.position.z += (targetZ - cakeSliceGroup.position.z) * 0.08;
+        cakeSliceGroup.position.y += (0.12 - cakeSliceGroup.position.y) * 0.08;
+      }
+
+      // Flicker candle flames
+      candleFlames.forEach((flame, idx) => {
+        if (flame.visible) {
+          const s = 1 + Math.sin(elapsed * 14 + idx * 2) * 0.15;
+          flame.scale.set(0.75 * s, 1.6 * s, 0.75 * s);
+        }
+      });
+
+      // Float 3D balloons upward
+      balloons.forEach((b) => {
+        b.position.y += b.userData.speedY;
+        b.position.x += Math.sin(elapsed * 1.5 + b.userData.swayOffset) * 0.006;
+        if (b.position.y > 7.5) {
+          b.position.y = -5.5;
+          b.userData.speedY = 0.012 + Math.random() * 0.018;
+        }
+      });
+
+      // Fall 3D flower petals
+      petals.forEach((p) => {
+        p.position.y -= p.userData.fallSpeed;
+        p.rotation.x += p.userData.rotSpeed;
+        p.rotation.y += p.userData.rotSpeed * 0.8;
+        if (p.position.y < -5) {
+          p.position.y = 6;
+        }
+      });
+
+      renderer.render(scene, camera);
+
+      // Render 2D FX Overlay
+      fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+
+      // Draw knife slice trail
+      if (sliceTrail.length > 1) {
+        fxCtx.beginPath();
+        for (let i = 0; i < sliceTrail.length; i++) {
+          const pt = sliceTrail[i];
+          if (i === 0) fxCtx.moveTo(pt.x, pt.y);
+          else fxCtx.lineTo(pt.x, pt.y);
+          pt.alpha -= 0.04;
+        }
+        fxCtx.strokeStyle = 'rgba(251, 191, 36, 0.85)';
+        fxCtx.lineWidth = 4;
+        fxCtx.lineCap = 'round';
+        fxCtx.stroke();
+        while (sliceTrail.length && sliceTrail[0].alpha <= 0) {
+          sliceTrail.shift();
+        }
+      }
+
+      // Draw sparkles & heart emojis
+      for (let i = fxParticles.length - 1; i >= 0; i--) {
+        const p = fxParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.12;
+        p.alpha -= 0.018;
+
+        if (p.alpha <= 0) {
+          fxParticles.splice(i, 1);
+          continue;
+        }
+
+        fxCtx.save();
+        fxCtx.globalAlpha = Math.max(0, p.alpha);
+        if (p.type === 'emoji') {
+          fxCtx.font = `${Math.round(p.size)}px sans-serif`;
+          fxCtx.fillText(p.text, p.x, p.y);
+        } else {
+          fxCtx.fillStyle = p.color;
+          fxCtx.beginPath();
+          fxCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          fxCtx.fill();
+        }
+        fxCtx.restore();
+      }
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Initialize UI & Start Loop
+    renderSongsList();
+    renderPhotoCards();
+    goToPage(0);
+    animate();
+  </script>
+</body>
+</html>
